@@ -18,7 +18,7 @@ namespace RegistroPonto4
     {
         private MySqlConnection conexao = GerenciadorConexao.ObterConexao();
         MySqlDataAdapter adaptador;
-        MySqlCommandBuilder construtor;
+        //MySqlCommandBuilder construtor;
 
 
         public Entrada()
@@ -30,12 +30,38 @@ namespace RegistroPonto4
 
         private void Entrada_Load(object sender, EventArgs e)
         {
-
+            btnAcessarDir.Enabled = false;
+            btnAcessarDir.BackColor = System.Drawing.Color.DarkGray;
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
             CarregarImagem();
+        }
+        private void txtId_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                if (string.IsNullOrEmpty(txtId.Text))
+                {
+                    MessageBox.Show("Insira seu ID para efetuar o registro!",
+                        "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else if (pbFoto.Image == null)
+                {
+                    MessageBox.Show("insira uma foto para efetuar o registro!",
+                        "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    GerenciadorConexao.AbrirConexao(conexao);
+                    InserirRegistro();
+                    PopularDataGrid(Convert.ToInt32(txtId.Text));
+                    GerenciadorConexao.FecharConexao(conexao);
+                }
+            }
+
+
         }
 
         private void CarregarImagem()
@@ -56,10 +82,8 @@ namespace RegistroPonto4
                 }
             }
         }
-
         private void InserirRegistro()
         {
-
             //Abre a Conexão
             GerenciadorConexao.AbrirConexao(conexao);
 
@@ -69,15 +93,14 @@ namespace RegistroPonto4
             //Datareader irá armazenar os dados do select na aplicação
             MySqlDataReader reader = verificarID.ExecuteReader();
 
-            //verifica se há informações armazenadas no DataReader
-
             try
             {
                 if (reader.Read())
                 {
-                    //Lê os campos resgatados do SELECT(id e nome)
+                    //Lê os campos resgatados do SELECT(id e nome) e insere nos campos da classe Usuario
                     Usuario usuario = new Usuario(reader.GetInt32("id"), reader.GetString("nome"));
 
+                    //Instância registro para usar as propriedades criadas no mesmo
                     Registro registro = new Registro();
 
                     //Resgata Diretório do projeto em desenvolvimento
@@ -103,6 +126,7 @@ namespace RegistroPonto4
                     //Define nome do Arquivo salvo no diretório como "Id + Nome + Data e Hora.jpg"
                     registro.Foto = path + "\\" + usuario.Id + " " + usuario.Nome + " " + DataFormatada + ".jpg";
 
+                    //Variavel booleana 
                     bool diretorioExiste = Directory.Exists(path);
 
                     //Verifica se o diretório do usuário existe
@@ -129,11 +153,13 @@ namespace RegistroPonto4
                     command.Parameters.AddWithValue("@dateTimeNow", registro.DataHora);
 
                     command.ExecuteNonQuery();
+                    btnAcessarDir.Enabled = true;
+                    btnAcessarDir.BackColor = System.Drawing.Color.Olive;
                     MessageBox.Show($"{usuario.Nome} seu registro foi efetuado com sucesso! data e hora do registro: {registro.DataHora}", "Mensagem", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
-                    MessageBox.Show($"Id {txtId.Text} de usuário inexistente no banco de dados", "Mensagem", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"Id {txtId.Text} de usuário inexistente no banco de dados", "Mensagem", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
             catch (Exception erro)
@@ -159,7 +185,7 @@ namespace RegistroPonto4
 
                 //comando para criar o adaptador e o contrutor SQL
                 adaptador = new MySqlDataAdapter(sql, conexao);
-                construtor = new MySqlCommandBuilder(adaptador);
+                //construtor = new MySqlCommandBuilder(adaptador);
 
                 //Preenche a Datatable com os dados do banco de dados
                 tabela = new DataTable();
@@ -169,28 +195,30 @@ namespace RegistroPonto4
             }
         }
 
-        private void txtId_KeyPress(object sender, KeyPressEventArgs e)
+        private void button1_Click_1(object sender, EventArgs e)
         {
-            if (e.KeyChar == (char)Keys.Enter)
+
+            if (dgRegistros.Rows.Count > 0)
             {
-                if (string.IsNullOrEmpty(txtId.Text))
+                //Resgata nome do usuário da máquina atual
+                string diretorioProjeto = AppDomain.CurrentDomain.BaseDirectory;
+                string diretorioImg = "Fotos";
+                string diretorioUser = Directory.GetParent(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)).FullName;
+                string nome = dgRegistros[1, 0].Value.ToString();
+                string path = $"{diretorioProjeto}\\{diretorioImg}\\{nome}";
+
+                var AbrirDiretorio = new System.Diagnostics.ProcessStartInfo()
                 {
-                    MessageBox.Show("Insira seu ID para efetuar o registro!", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else if (pbFoto.Image == null)
-                {
-                    MessageBox.Show("insira uma foto para efetuar o registro!", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    GerenciadorConexao.AbrirConexao(conexao);
-                    InserirRegistro();
-                    PopularDataGrid(Convert.ToInt32(txtId.Text));
-                    GerenciadorConexao.FecharConexao(conexao);
-                }
+                    FileName = path,
+                    UseShellExecute = true
+                };
+                //abre diretório do usuario que fez o registro de ponto
+                System.Diagnostics.Process.Start(AbrirDiretorio);
             }
-
-
+            else
+            {
+                MessageBox.Show("só é possivel efetuar a consulta dos registros do seu diretório após fazer um registro de ponto", "Mensagem", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
     }
 }

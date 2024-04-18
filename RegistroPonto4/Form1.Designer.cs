@@ -44,12 +44,17 @@
             // 
             // button1
             // 
-            button1.Location = new Point(29, 54);
+            button1.BackColor = Color.DarkGreen;
+            button1.Cursor = Cursors.Hand;
+            button1.FlatStyle = FlatStyle.Popup;
+            button1.Font = new Font("Segoe UI", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            button1.ForeColor = Color.White;
+            button1.Location = new Point(33, 54);
             button1.Name = "button1";
-            button1.Size = new Size(177, 54);
+            button1.Size = new Size(168, 48);
             button1.TabIndex = 3;
             button1.Text = "Registrar";
-            button1.UseVisualStyleBackColor = true;
+            button1.UseVisualStyleBackColor = false;
             button1.Click += button1_Click;
             // 
             // Form1
@@ -60,7 +65,8 @@
             Controls.Add(button1);
             Controls.Add(label1);
             Name = "Form1";
-            Text = "Form1";
+            StartPosition = FormStartPosition.CenterScreen;
+            Text = "Registro";
             ResumeLayout(false);
             PerformLayout();
         }
